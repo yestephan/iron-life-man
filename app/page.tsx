@@ -1,12 +1,20 @@
-export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Iron Life Man</h1>
-        <p className="text-xl text-muted-foreground">
-          Your personalized Ironman training journey starts here
-        </p>
-      </div>
-    </main>
-  )
+import { redirect } from 'next/navigation';
+import { auth } from '@/auth';
+import { getProfile } from '@/lib/supabase/queries';
+
+export default async function Home() {
+  const session = await auth();
+
+  if (!session) {
+    redirect('/signin');
+  }
+
+  // Check if user has completed onboarding
+  const profile = await getProfile(session.user.id);
+
+  if (!profile) {
+    redirect('/onboarding');
+  }
+
+  redirect('/dashboard');
 }

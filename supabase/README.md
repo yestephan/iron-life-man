@@ -17,7 +17,7 @@ You have two options to set up the database schema:
 
 1. Install Supabase CLI if you haven't:
    ```bash
-   npm install -g supabase
+   pnpm add -g supabase
    ```
 
 2. Link your project:
