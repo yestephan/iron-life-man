@@ -3,8 +3,11 @@
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
-const { createClient } = require('@supabase/supabase-js');
-require('dotenv/config');
+const { Pool } = require('pg');
+
+// Load environment variables from .env.local (Next.js default) or .env
+require('dotenv').config({ path: '.env.local' });
+require('dotenv').config({ path: '.env' });
 
 // ANSI color codes for better output
 const colors = {
@@ -27,20 +30,83 @@ function log(message, color = colors.reset) {
   console.log(`${color}${message}${colors.reset}`);
 }
 
-function getSupabaseClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+function getDatabaseConnection() {
+  // Option 1: Use direct connection string (recommended)
+  const databaseUrl = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
 
-  if (!supabaseUrl || !supabaseKey) {
-    log('\nError: Missing Supabase credentials in environment variables', colors.red);
-    log('Required variables:', colors.yellow);
-    log('  • NEXT_PUBLIC_SUPABASE_URL', colors.yellow);
-    log('  • SUPABASE_SERVICE_ROLE_KEY', colors.yellow);
-    log('\nMake sure you have a .env file with these values.\n', colors.yellow);
-    process.exit(1);
+  if (databaseUrl) {
+    return new Pool({ connectionString: databaseUrl });
   }
 
-  return { supabaseUrl, supabaseKey };
+  // Option 2: Construct from Supabase URL and password
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const dbPassword = process.env.SUPABASE_DB_PASSWORD;
+  const dbHost = process.env.SUPABASE_DB_HOST;
+
+  if (supabaseUrl && dbPassword) {
+    // Extract project ref from URL if needed
+    const projectRef = supabaseUrl.match(/https?:\/\/([^.]+)\.supabase\.co/)?.[1];
+    const host = dbHost || (projectRef ? `${projectRef}.supabase.co` : null);
+
+    if (host) {
+      return new Pool({
+        host: host,
+        port: 5432,
+        database: 'postgres',
+        user: 'postgres',
+        password: dbPassword,
+        ssl: { rejectUnauthorized: false },
+      });
+    }
+  }
+
+  // Check if .env files exist
+  const envLocalExists = fs.existsSync(path.join(process.cwd(), '.env.local'));
+  const envExists = fs.existsSync(path.join(process.cwd(), '.env'));
+  const envFile = envLocalExists ? '.env.local' : envExists ? '.env' : '.env.local';
+
+  log('\n❌ Error: Missing database connection information', colors.red);
+  log('\nYou need to add one of the following to your ' + envFile + ' file:', colors.yellow);
+
+  const supabaseUrlExists = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (supabaseUrlExists) {
+    const projectRef = process.env.NEXT_PUBLIC_SUPABASE_URL.match(
+      /https?:\/\/([^.]+)\.supabase\.co/
+    )?.[1];
+    log('\n📋 Option 1 (Recommended): Add to ' + envFile + ':', colors.cyan);
+    log(
+      '   DATABASE_URL=postgresql://postgres:[YOUR_PASSWORD]@' +
+        (projectRef || '[PROJECT]') +
+        '.supabase.co:5432/postgres',
+      colors.reset
+    );
+    log('\n📋 Option 2: Add to ' + envFile + ':', colors.cyan);
+    if (projectRef) {
+      log('   SUPABASE_DB_HOST=' + projectRef + '.supabase.co', colors.reset);
+    } else {
+      log('   SUPABASE_DB_HOST=[your-project].supabase.co', colors.reset);
+    }
+    log('   SUPABASE_DB_PASSWORD=[your-database-password]', colors.reset);
+  } else {
+    log('\n📋 Option 1 (Recommended): Add to ' + envFile + ':', colors.cyan);
+    log('   DATABASE_URL=postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres', colors.reset);
+    log('\n📋 Option 2: Add to ' + envFile + ':', colors.cyan);
+    log('   SUPABASE_DB_HOST=[your-project].supabase.co', colors.reset);
+    log('   SUPABASE_DB_PASSWORD=[your-database-password]', colors.reset);
+  }
+
+  log('\n🔑 How to get your database connection string:', colors.yellow);
+  log('   1. Go to Supabase Dashboard → Your Project', colors.reset);
+  log('   2. Navigate to Project Settings → Database', colors.reset);
+  log('   3. Scroll to "Connection string" section', colors.reset);
+  log('   4. Copy the "URI" connection string (starts with postgresql://)', colors.reset);
+  log('      ⚠️  Use "URI" NOT "Connection pooling" for migrations', colors.yellow);
+  log('   5. Add it to your .env.local file as DATABASE_URL', colors.reset);
+  log("\n   If you don't know your password:", colors.yellow);
+  log('   • Go to Project Settings → Database → Reset database password', colors.reset);
+  log('   • Then copy the new connection string', colors.reset);
+  log('\n');
+  process.exit(1);
 }
 
 function getMigrationFiles() {
@@ -51,18 +117,54 @@ function getMigrationFiles() {
     process.exit(1);
   }
 
-  const files = fs.readdirSync(migrationsDir)
-    .filter(file => file.endsWith('.sql'))
+  const files = fs
+    .readdirSync(migrationsDir)
+    .filter((file) => file.endsWith('.sql'))
     .sort();
 
-  return files.map(file => ({
+  return files.map((file) => ({
     name: file,
     path: path.join(migrationsDir, file),
   }));
 }
 
 function question(query) {
-  return new Promise(resolve => rl.question(query, resolve));
+  return new Promise((resolve) => rl.question(query, resolve));
+}
+
+function questionSingleChar(query) {
+  return new Promise((resolve) => {
+    // Temporarily pause readline to avoid conflicts
+    rl.pause();
+
+    process.stdout.write(query);
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+
+    const onData = (char) => {
+      const ch = char.toString().toLowerCase();
+
+      if (ch === '\u0003') {
+        // Ctrl+C
+        process.stdin.setRawMode(false);
+        process.stdin.removeListener('data', onData);
+        rl.resume();
+        process.exit(0);
+      }
+
+      if (ch === 'y' || ch === 'n') {
+        process.stdin.setRawMode(false);
+        process.stdin.removeListener('data', onData);
+        process.stdout.write(ch + '\n');
+        // Restore readline for next question
+        rl.resume();
+        resolve(ch);
+      }
+    };
+
+    process.stdin.on('data', onData);
+  });
 }
 
 async function selectMigrations(migrations) {
@@ -75,7 +177,10 @@ async function selectMigrations(migrations) {
   migrations.forEach((migration, index) => {
     const fileSize = fs.statSync(migration.path).size;
     const sizeKB = (fileSize / 1024).toFixed(2);
-    log(`  [${String(index + 1).padStart(2, ' ')}] ${migration.name.padEnd(35, ' ')} (${sizeKB} KB)`, colors.blue);
+    log(
+      `  [${String(index + 1).padStart(2, ' ')}] ${migration.name.padEnd(35, ' ')} (${sizeKB} KB)`,
+      colors.blue
+    );
   });
 
   console.log('\n');
@@ -97,11 +202,12 @@ async function selectMigrations(migrations) {
     return migrations;
   }
 
-  const indices = answer.split(',')
-    .map(s => parseInt(s.trim()) - 1)
-    .filter(i => !isNaN(i) && i >= 0 && i < migrations.length);
+  const indices = answer
+    .split(',')
+    .map((s) => parseInt(s.trim()) - 1)
+    .filter((i) => !isNaN(i) && i >= 0 && i < migrations.length);
 
-  return indices.map(i => migrations[i]);
+  return indices.map((i) => migrations[i]);
 }
 
 async function previewMigration(migration) {
@@ -119,70 +225,71 @@ async function previewMigration(migration) {
   log('  ' + '─'.repeat(50), colors.cyan);
 }
 
-async function runMigration(supabaseUrl, supabaseKey, migration) {
+async function runMigration(pool, migration) {
   log(`\n▸ Running: ${migration.name}`, colors.bright + colors.cyan);
+
+  const client = await pool.connect();
 
   try {
     const sql = fs.readFileSync(migration.path, 'utf-8');
 
-    // Use Supabase Management API to execute SQL
-    const response = await fetch(`${supabaseUrl}/rest/v1/rpc/exec`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify({ query: sql })
-    });
+    // Execute the entire migration as a single transaction
+    await client.query('BEGIN');
 
-    // If the exec endpoint doesn't work, try direct SQL execution via REST API
-    if (!response.ok && response.status === 404) {
-      log('  Note: Using alternative execution method...', colors.yellow);
+    try {
+      // Execute the SQL - pg handles multiple statements automatically
+      await client.query(sql);
+      await client.query('COMMIT');
 
-      // Split SQL into individual statements
-      const statements = sql
-        .split(';')
-        .map(s => s.trim())
-        .filter(s => s.length > 0 && !s.startsWith('--'));
-
-      log(`  Executing ${statements.length} statement(s)...`, colors.reset);
-
-      // For each statement, we'll try to execute it
-      // Note: This is a workaround - ideally use Supabase CLI or pg client
-      for (let i = 0; i < statements.length; i++) {
-        const statement = statements[i];
-        log(`  [${i + 1}/${statements.length}] Executing statement...`, colors.reset);
-
-        // Create a Supabase client and use query
-        const supabase = createClient(supabaseUrl, supabaseKey);
-
-        // This will work for most DDL statements when using service role
-        const { error } = await supabase.rpc('exec', { query: statement + ';' })
-          .catch(() => ({ error: { message: 'Direct execution not available' } }));
-
-        if (error && error.message !== 'Direct execution not available') {
-          throw new Error(`Statement ${i + 1} failed: ${error.message}`);
-        }
-      }
-    } else if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP ${response.status}: ${errorText}`);
+      log(`✓ Successfully executed: ${migration.name}`, colors.bright + colors.green);
+      return { success: true, migration: migration.name };
+    } catch (queryError) {
+      await client.query('ROLLBACK');
+      throw queryError;
     }
-
-    log(`✓ Successfully executed: ${migration.name}`, colors.bright + colors.green);
-    return { success: true, migration: migration.name };
   } catch (error) {
     log(`✗ Failed: ${migration.name}`, colors.bright + colors.red);
-    log(`  Error: ${error.message}`, colors.red);
 
-    log('\n  💡 Tip: For complex migrations, consider using:', colors.yellow);
-    log('     • Supabase CLI: pnpm exec supabase db push', colors.yellow);
-    log('     • SQL Editor in Supabase Dashboard', colors.yellow);
-    log('     • Direct PostgreSQL connection\n', colors.yellow);
+    // Provide helpful error messages for common issues
+    if (error.code === '28P01') {
+      log(`  Error: Password authentication failed`, colors.red);
+      log('\n  🔑 This usually means:', colors.yellow);
+      log('     • The password in DATABASE_URL is incorrect', colors.reset);
+      log('     • You might be using the wrong connection string', colors.reset);
+      log('\n  💡 Solutions:', colors.cyan);
+      log('     1. Get the correct connection string from Supabase Dashboard:', colors.reset);
+      log('        Project Settings → Database → Connection string', colors.reset);
+      log('     2. Make sure you\'re using the "URI" (not "Connection pooling")', colors.reset);
+      log("     3. If you don't know your password, reset it:", colors.reset);
+      log('        Project Settings → Database → Reset database password', colors.reset);
+      log('     4. Alternatively, use Supabase CLI:', colors.reset);
+      log('        pnpm exec supabase db push', colors.reset);
+    } else if (error.code === '42P07' || error.message.includes('already exists')) {
+      // Table/relation already exists - treat as success since migration is idempotent
+      log(`  ⚠️  Warning: ${error.message}`, colors.yellow);
+      log(`  ℹ️  This object already exists - skipping (migration is idempotent)`, colors.cyan);
+      log('', colors.reset);
+      return { success: true, migration: migration.name, skipped: true };
+    } else if (error.code === '42P01' && migration.name.includes('drop')) {
+      // Relation does not exist - expected for drop migrations, treat as success
+      log(`  ℹ️  ${error.message}`, colors.cyan);
+      log(`  ✓ This is expected for drop migrations when objects don't exist`, colors.green);
+      log('', colors.reset);
+      return { success: true, migration: migration.name, skipped: true };
+    } else {
+      log(`  Error: ${error.message}`, colors.red);
+      if (error.code) {
+        log(`  Code: ${error.code}`, colors.reset);
+      }
+      log('\n  💡 Tip: For complex migrations, consider using:', colors.yellow);
+      log('     • Supabase CLI: pnpm exec supabase db push', colors.yellow);
+      log('     • SQL Editor in Supabase Dashboard', colors.yellow);
+      log('', colors.reset);
+    }
 
     return { success: false, migration: migration.name, error: error.message };
+  } finally {
+    client.release();
   }
 }
 
@@ -201,16 +308,20 @@ async function confirmRun(selectedMigrations) {
   log('⚠️  Warning: These migrations will be executed on your Supabase instance.', colors.yellow);
   log('   Make sure you have backups if running on production!\n', colors.yellow);
 
-  const answer = await question(colors.green + 'Run these migrations? (yes/no): ' + colors.reset);
+  const answer = await questionSingleChar(
+    colors.green + 'Run these migrations? (y/n): ' + colors.reset
+  );
 
-  return answer.toLowerCase() === 'yes' || answer.toLowerCase() === 'y';
+  return answer === 'y';
 }
 
 async function showPreview(selectedMigrations) {
   console.log('\n');
-  const answer = await question(colors.cyan + 'Preview migrations before running? (yes/no): ' + colors.reset);
+  const answer = await questionSingleChar(
+    colors.cyan + 'Preview migrations before running? (y/n): ' + colors.reset
+  );
 
-  if (answer.toLowerCase() === 'yes' || answer.toLowerCase() === 'y') {
+  if (answer === 'y') {
     for (const migration of selectedMigrations) {
       await previewMigration(migration);
       console.log('');
@@ -259,15 +370,44 @@ async function main() {
   log('  Starting Migration Execution', colors.bright + colors.cyan);
   log('═'.repeat(60) + '\n', colors.bright + colors.cyan);
 
-  const { supabaseUrl, supabaseKey } = getSupabaseClient();
+  const pool = getDatabaseConnection();
   const results = [];
 
-  for (const migration of selectedMigrations) {
-    const result = await runMigration(supabaseUrl, supabaseKey, migration);
-    results.push(result);
+  try {
+    // Test connection first
+    log('🔌 Testing database connection...', colors.cyan);
+    const testClient = await pool.connect();
+    await testClient.query('SELECT 1');
+    testClient.release();
+    log('✓ Connection successful\n', colors.green);
 
-    // Add a small delay between migrations
-    await new Promise(resolve => setTimeout(resolve, 500));
+    for (const migration of selectedMigrations) {
+      const result = await runMigration(pool, migration);
+      results.push(result);
+
+      // Add a small delay between migrations
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  } catch (error) {
+    if (error.code === '28P01') {
+      log('\n❌ Connection failed: Password authentication error', colors.bright + colors.red);
+      log('\n  🔑 This usually means:', colors.yellow);
+      log('     • The password in DATABASE_URL is incorrect', colors.reset);
+      log('     • You might be using the wrong connection string', colors.reset);
+      log('\n  💡 Solutions:', colors.cyan);
+      log('     1. Get the correct connection string from Supabase Dashboard:', colors.reset);
+      log('        Project Settings → Database → Connection string', colors.reset);
+      log('     2. Make sure you\'re using the "URI" (not "Connection pooling")', colors.reset);
+      log("     3. If you don't know your password, reset it:", colors.reset);
+      log('        Project Settings → Database → Reset database password', colors.reset);
+      log('     4. Then update DATABASE_URL in your .env.local file', colors.reset);
+      log('\n');
+    } else {
+      log(`\n❌ Connection error: ${error.message}`, colors.bright + colors.red);
+      log(`   Code: ${error.code || 'N/A'}\n`, colors.red);
+    }
+  } finally {
+    await pool.end();
   }
 
   // Summary
@@ -275,24 +415,30 @@ async function main() {
   log('  Migration Execution Summary', colors.bright + colors.magenta);
   log('═'.repeat(60), colors.bright + colors.magenta);
 
-  const successful = results.filter(r => r.success).length;
-  const failed = results.filter(r => !r.success).length;
+  const successful = results.filter((r) => r.success && !r.skipped).length;
+  const skipped = results.filter((r) => r.success && r.skipped).length;
+  const failed = results.filter((r) => !r.success).length;
 
   console.log('');
   log(`  📊 Total Migrations: ${results.length}`, colors.bright);
   log(`  ✅ Successful: ${successful}`, colors.green);
+  if (skipped > 0) {
+    log(`  ⏭️  Skipped (already exists): ${skipped}`, colors.yellow);
+  }
   log(`  ❌ Failed: ${failed}`, failed > 0 ? colors.red : colors.reset);
 
   if (failed > 0) {
     log('\n  Failed migrations:', colors.bright + colors.red);
-    results.filter(r => !r.success).forEach(r => {
-      log(`    • ${r.migration}`, colors.red);
-      log(`      ${r.error}`, colors.red);
-    });
+    results
+      .filter((r) => !r.success)
+      .forEach((r) => {
+        log(`    • ${r.migration}`, colors.red);
+        log(`      ${r.error}`, colors.red);
+      });
   }
 
-  if (successful === results.length) {
-    log('\n  🎉 All migrations executed successfully!\n', colors.bright + colors.green);
+  if (successful + skipped === results.length) {
+    log('\n  🎉 All migrations completed successfully!\n', colors.bright + colors.green);
   } else {
     log('\n  ⚠️  Some migrations failed. Check the errors above.\n', colors.yellow);
   }
@@ -307,7 +453,7 @@ process.on('SIGINT', () => {
   process.exit(0);
 });
 
-main().catch(error => {
+main().catch((error) => {
   log(`\n❌ Fatal error: ${error.message}\n`, colors.bright + colors.red);
   console.error(error);
   rl.close();

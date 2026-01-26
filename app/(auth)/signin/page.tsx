@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { createClient } from '@/lib/supabase/client';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
@@ -22,16 +22,16 @@ export default function SignInPage() {
     setIsLoading(true);
 
     try {
-      const result = await signIn('credentials', {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        redirect: false,
       });
 
-      if (result?.error) {
+      if (error) {
         toast({
           title: 'Error',
-          description: 'Invalid email or password',
+          description: error.message || 'Invalid email or password',
           variant: 'destructive',
         });
       } else {

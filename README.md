@@ -5,6 +5,7 @@ A dynamic Ironman training application that generates personalized 16-week train
 ## 🏊🚴🏃 Features
 
 ### ✅ Implemented (MVP Core)
+
 - **User Authentication**: Sign up and sign in with email/password
 - **Onboarding Flow**: Multi-step onboarding to collect user preferences
   - Race date selection
@@ -26,11 +27,13 @@ A dynamic Ironman training application that generates personalized 16-week train
 - **Database**: Supabase PostgreSQL with Row Level Security
 
 ### 🚧 In Progress
+
 - Google Calendar Integration (OAuth + sync)
 - Rolling plan generation (cron job)
 - Settings page
 
 ### 📅 Planned
+
 - Automated weekly plan generation
 - Profile management and settings
 - Mobile responsive polish
@@ -57,22 +60,26 @@ A dynamic Ironman training application that generates personalized 16-week train
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone <your-repo>
    cd iron-life-man
    ```
 
 2. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 3. Set up environment variables:
+
    ```bash
    cp .env.example .env.local
    ```
 
 4. Update `.env.local` with your Supabase credentials:
+
    ```
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -87,6 +94,7 @@ A dynamic Ironman training application that generates personalized 16-week train
    - Or follow instructions in `supabase/README.md`
 
 6. Start the development server:
+
    ```bash
    pnpm dev
    ```
@@ -133,6 +141,7 @@ iron-life-man/
 ## 🧮 Training Plan Algorithm
 
 The plan generation algorithm uses:
+
 - **Phase Distribution**: 40% base, 35% build, 20% peak, 5% taper
 - **Discipline Ratios**: 18% swim, 52% bike, 30% run
 - **Fitness Multipliers**: Beginner (0.6x), Intermediate (0.7x), Advanced (0.8x)

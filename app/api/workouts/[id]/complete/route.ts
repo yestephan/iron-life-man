@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { requireAuth, getSupabaseClient } from '@/lib/supabase/auth';
 import { getWorkout, updateWorkout } from '@/lib/supabase/queries';
 
 export async function POST(
@@ -7,26 +7,28 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = await requireAuth();
+    const supabase = await getSupabaseClient();
 
     const workoutId = params.id;
-    const workout = await getWorkout(workoutId);
+    const workout = await getWorkout(workoutId, supabase);
 
     if (!workout) {
       return NextResponse.json({ error: 'Workout not found' }, { status: 404 });
     }
 
-    if (workout.user_id !== session.user.id) {
+    if (workout.user_id !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const updatedWorkout = await updateWorkout(workoutId, {
-      status: 'completed',
-      completed_at: new Date(),
-    });
+    const updatedWorkout = await updateWorkout(
+      workoutId,
+      {
+        status: 'completed',
+        completed_at: new Date(),
+      },
+      supabase
+    );
 
     return NextResponse.json({ workout: updatedWorkout });
   } catch (error: any) {

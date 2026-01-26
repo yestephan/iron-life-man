@@ -2,30 +2,37 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
+import { Zap } from 'lucide-react';
 
 export default function GeneratingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
   const { toast } = useToast();
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('Creating your profile...');
 
   useEffect(() => {
-    if (!session?.user?.id) return;
-
     const generatePlan = async () => {
       try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user?.id) {
+          router.push('/signin');
+          return;
+        }
+
         // Simulate progress
         setProgress(20);
         setStatus('Creating your profile...');
 
         const onboardingData = {
-          userId: session.user.id,
           raceDate: searchParams.get('raceDate'),
           fitnessLevel: searchParams.get('fitnessLevel'),
           targetHours: parseInt(searchParams.get('targetHours') || '10'),
@@ -48,14 +55,21 @@ export default function GeneratingPage() {
           throw new Error(error.error || 'Failed to generate plan');
         }
 
+        const result = await response.json();
+        
+        // Verify profile was created successfully
+        if (!result.success) {
+          throw new Error('Failed to create profile');
+        }
+
         setProgress(60);
         setStatus('Generating your first 3 weeks...');
 
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         setProgress(80);
 
         setStatus('Finalizing your training plan...');
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
         setProgress(100);
 
         toast({
@@ -63,10 +77,12 @@ export default function GeneratingPage() {
           description: 'Your training plan is ready!',
         });
 
-        // Redirect to dashboard
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 500);
+        // Wait a moment to ensure database write has fully propagated
+        // Then redirect using replace to avoid history issues
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        
+        // Force a full page navigation to ensure server-side checks see the new profile
+        window.location.replace('/dashboard');
       } catch (error: any) {
         console.error('Error generating plan:', error);
         toast({
@@ -81,17 +97,17 @@ export default function GeneratingPage() {
     };
 
     generatePlan();
-  }, [session, searchParams, router, toast]);
+  }, [searchParams, router, toast]);
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 text-6xl">⚡</div>
+          <div className="mx-auto mb-4 flex justify-center">
+            <Zap className="w-16 h-16 text-primary" />
+          </div>
           <CardTitle>Generating Your Training Plan</CardTitle>
-          <CardDescription>
-            This will only take a moment...
-          </CardDescription>
+          <CardDescription>This will only take a moment...</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">

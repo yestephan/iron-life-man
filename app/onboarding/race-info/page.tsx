@@ -2,28 +2,40 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { FitnessLevel } from '@/types/database';
 
 export default function RaceInfoPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [raceDate, setRaceDate] = useState('');
+  const [raceDate, setRaceDate] = useState<Date | undefined>(undefined);
   const [fitnessLevel, setFitnessLevel] = useState<FitnessLevel>('beginner');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!raceDate) {
+      toast({
+        title: 'Error',
+        description: 'Please select a race date',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     // Validate race date is at least 12 weeks away
-    const selectedDate = new Date(raceDate);
     const today = new Date();
     const weeksAway = Math.floor(
-      (selectedDate.getTime() - today.getTime()) / (7 * 24 * 60 * 60 * 1000)
+      (raceDate.getTime() - today.getTime()) / (7 * 24 * 60 * 60 * 1000)
     );
 
     if (weeksAway < 12) {
@@ -37,10 +49,14 @@ export default function RaceInfoPage() {
 
     // Navigate to next step with data
     const params = new URLSearchParams();
-    params.set('raceDate', raceDate);
+    params.set('raceDate', format(raceDate, 'yyyy-MM-dd'));
     params.set('fitnessLevel', fitnessLevel);
     router.push(`/onboarding/availability?${params.toString()}`);
   };
+
+  // Calculate minimum date (12 weeks from today)
+  const minDate = new Date();
+  minDate.setDate(minDate.getDate() + 12 * 7);
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center">
@@ -53,18 +69,29 @@ export default function RaceInfoPage() {
           <CardContent className="space-y-6">
             {/* Race Date */}
             <div className="space-y-2">
-              <Label htmlFor="raceDate">Race Date</Label>
-              <Input
-                id="raceDate"
-                type="date"
-                value={raceDate}
-                onChange={(e) => setRaceDate(e.target.value)}
-                min={new Date(Date.now() + 12 * 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                required
-              />
-              <p className="text-sm text-muted-foreground">
-                Must be at least 12 weeks from today
-              </p>
+              <Label>Race Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    data-empty={!raceDate}
+                    className="data-[empty=true]:text-muted-foreground w-full justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {raceDate ? format(raceDate, 'PPP') : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={raceDate}
+                    onSelect={setRaceDate}
+                    disabled={(date) => date < minDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <p className="text-sm text-muted-foreground">Must be at least 12 weeks from today</p>
             </div>
 
             {/* Fitness Level */}
@@ -87,9 +114,7 @@ export default function RaceInfoPage() {
                         New to endurance training or first Ironman
                       </p>
                     </div>
-                    {fitnessLevel === 'beginner' && (
-                      <Badge variant="default">Selected</Badge>
-                    )}
+                    {fitnessLevel === 'beginner' && <Badge variant="default">Selected</Badge>}
                   </div>
                 </button>
 
@@ -109,9 +134,7 @@ export default function RaceInfoPage() {
                         Completed marathons or half-Ironman
                       </p>
                     </div>
-                    {fitnessLevel === 'intermediate' && (
-                      <Badge variant="default">Selected</Badge>
-                    )}
+                    {fitnessLevel === 'intermediate' && <Badge variant="default">Selected</Badge>}
                   </div>
                 </button>
 
@@ -131,9 +154,7 @@ export default function RaceInfoPage() {
                         Multiple Ironman finishes, consistent training background
                       </p>
                     </div>
-                    {fitnessLevel === 'advanced' && (
-                      <Badge variant="default">Selected</Badge>
-                    )}
+                    {fitnessLevel === 'advanced' && <Badge variant="default">Selected</Badge>}
                   </div>
                 </button>
               </div>

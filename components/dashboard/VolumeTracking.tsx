@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Waves, Bike, Footprints } from 'lucide-react';
 import type { Workout, Discipline } from '@/types/database';
 
 interface VolumeTrackingProps {
@@ -20,12 +21,9 @@ function calculateVolumeStats(workouts: Workout[]) {
   };
 
   ['swim', 'bike', 'run'].forEach((discipline) => {
-    const disciplineWorkouts = workouts.filter(
-      (w) => w.discipline === discipline
-    );
+    const disciplineWorkouts = workouts.filter((w) => w.discipline === discipline);
 
-    const target =
-      disciplineWorkouts.reduce((sum, w) => sum + w.duration_minutes, 0) / 60;
+    const target = disciplineWorkouts.reduce((sum, w) => sum + w.duration_minutes, 0) / 60;
 
     const completed =
       disciplineWorkouts
@@ -46,35 +44,44 @@ export default function VolumeTracking({ workouts }: VolumeTrackingProps) {
   const stats = calculateVolumeStats(workouts);
 
   const disciplines = [
-    { key: 'swim' as const, label: 'Swim', emoji: '🏊', color: 'text-cyan-600' },
-    { key: 'bike' as const, label: 'Bike', emoji: '🚴', color: 'text-green-600' },
-    { key: 'run' as const, label: 'Run', emoji: '🏃', color: 'text-red-600' },
+    {
+      key: 'swim' as const,
+      label: 'Swim',
+      icon: <Waves className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />,
+      color: 'text-cyan-600',
+    },
+    {
+      key: 'bike' as const,
+      label: 'Bike',
+      icon: <Bike className="w-5 h-5 text-green-600 dark:text-green-400" />,
+      color: 'text-green-600',
+    },
+    {
+      key: 'run' as const,
+      label: 'Run',
+      icon: <Footprints className="w-5 h-5 text-red-600 dark:text-red-400" />,
+      color: 'text-red-600',
+    },
   ];
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      {disciplines.map(({ key, label, emoji, color }) => (
+      {disciplines.map(({ key, label, icon, color }) => (
         <Card key={key}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              <span className="mr-2">{emoji}</span>
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              {icon}
               {label}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex items-baseline gap-2">
-                <div className={`text-2xl font-bold ${color}`}>
-                  {stats[key].completed}h
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  / {stats[key].target}h
-                </div>
+                <div className={`text-2xl font-bold ${color}`}>{stats[key].completed}h</div>
+                <div className="text-sm text-muted-foreground">/ {stats[key].target}h</div>
               </div>
               <Progress value={stats[key].percentage} className="h-2" />
-              <div className="text-xs text-muted-foreground">
-                {stats[key].percentage}% complete
-              </div>
+              <div className="text-xs text-muted-foreground">{stats[key].percentage}% complete</div>
             </div>
           </CardContent>
         </Card>

@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,9 +15,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import type { Workout } from '@/types/database';
-import { format } from 'date-fns';
 
 interface RescheduleModalProps {
   workout: Workout;
@@ -24,8 +28,8 @@ interface RescheduleModalProps {
 }
 
 export default function RescheduleModal({ workout, open, onClose }: RescheduleModalProps) {
-  const [scheduledDate, setScheduledDate] = useState(
-    format(new Date(workout.scheduled_date), 'yyyy-MM-dd')
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(
+    new Date(workout.scheduled_date)
   );
   const [scheduledTime, setScheduledTime] = useState(workout.scheduled_time);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +38,16 @@ export default function RescheduleModal({ workout, open, onClose }: RescheduleMo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!scheduledDate) {
+      toast({
+        title: 'Error',
+        description: 'Please select a date',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -41,7 +55,7 @@ export default function RescheduleModal({ workout, open, onClose }: RescheduleMo
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          scheduled_date: scheduledDate,
+          scheduled_date: format(scheduledDate, 'yyyy-MM-dd'),
           scheduled_time: scheduledTime,
         }),
       });
@@ -73,21 +87,32 @@ export default function RescheduleModal({ workout, open, onClose }: RescheduleMo
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Reschedule Workout</DialogTitle>
-          <DialogDescription>
-            Choose a new date and time for this workout
-          </DialogDescription>
+          <DialogDescription>Choose a new date and time for this workout</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="date">Date</Label>
-              <Input
-                id="date"
-                type="date"
-                value={scheduledDate}
-                onChange={(e) => setScheduledDate(e.target.value)}
-                required
-              />
+              <Label>Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    data-empty={!scheduledDate}
+                    className="data-[empty=true]:text-muted-foreground w-full justify-start text-left font-normal"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {scheduledDate ? format(scheduledDate, 'PPP') : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={scheduledDate}
+                    onSelect={setScheduledDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label htmlFor="time">Time</Label>

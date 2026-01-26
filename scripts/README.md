@@ -35,14 +35,26 @@ node scripts/run-migrations.js
 
 ### Environment Variables
 
-Make sure you have a `.env` file in the root directory with the following variables:
+Make sure you have a `.env` file in the root directory with one of the following connection options:
 
+**Option 1 (Recommended)**: Direct connection string:
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+DATABASE_URL=postgresql://postgres:[PASSWORD]@[HOST]:5432/postgres
 ```
 
-**Important**: Use the `SUPABASE_SERVICE_ROLE_KEY` (not the anon key) as it has the necessary permissions to execute DDL statements.
+**Option 2**: Separate connection details:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_DB_HOST=your-project.supabase.co
+SUPABASE_DB_PASSWORD=your-database-password
+```
+
+**How to get your database password:**
+1. Go to your Supabase Dashboard
+2. Navigate to **Project Settings** → **Database**
+3. Find the **Connection string** section
+4. Copy the connection string or extract the password from it
+5. The password is the part after `postgres:` and before `@` in the connection string
 
 ## How It Works
 
