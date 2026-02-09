@@ -89,38 +89,38 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GCAL-01 | TBD | Pending |
-| GCAL-02 | TBD | Pending |
-| GCAL-03 | TBD | Pending |
-| GCAL-04 | TBD | Pending |
-| GCAL-05 | TBD | Pending |
-| GCAL-06 | TBD | Pending |
-| GCAL-07 | TBD | Pending |
-| GCAL-08 | TBD | Pending |
-| GCAL-09 | TBD | Pending |
-| GCAL-10 | TBD | Pending |
-| GCAL-11 | TBD | Pending |
-| GCAL-12 | TBD | Pending |
-| DRAG-01 | TBD | Pending |
-| DRAG-02 | TBD | Pending |
-| DRAG-03 | TBD | Pending |
-| DRAG-04 | TBD | Pending |
-| DRAG-05 | TBD | Pending |
-| DRAG-06 | TBD | Pending |
-| DRAG-07 | TBD | Pending |
-| DRAG-08 | TBD | Pending |
-| DRAG-09 | TBD | Pending |
-| DRAG-10 | TBD | Pending |
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| DATA-04 | TBD | Pending |
+| GCAL-01 | Phase 1 | Pending |
+| GCAL-02 | Phase 1 | Pending |
+| GCAL-03 | Phase 2 | Pending |
+| GCAL-04 | Phase 3 | Pending |
+| GCAL-05 | Phase 3 | Pending |
+| GCAL-06 | Phase 3 | Pending |
+| GCAL-07 | Phase 2 | Pending |
+| GCAL-08 | Phase 3 | Pending |
+| GCAL-09 | Phase 3 | Pending |
+| GCAL-10 | Phase 1 | Pending |
+| GCAL-11 | Phase 2 | Pending |
+| GCAL-12 | Phase 3 | Pending |
+| DRAG-01 | Phase 4 | Pending |
+| DRAG-02 | Phase 4 | Pending |
+| DRAG-03 | Phase 4 | Pending |
+| DRAG-04 | Phase 4 | Pending |
+| DRAG-05 | Phase 4 | Pending |
+| DRAG-06 | Phase 4 | Pending |
+| DRAG-07 | Phase 4 | Pending |
+| DRAG-08 | Phase 4 | Pending |
+| DRAG-09 | Phase 4 | Pending |
+| DRAG-10 | Phase 5 | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 3 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-04 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 28 total
-- Mapped to phases: 0 (roadmap not yet created)
-- Unmapped: 28 ⚠️
+- v1 requirements: 26 total
+- Mapped to phases: 26 (100% coverage)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-09*
-*Last updated: 2026-02-09 after initial definition*
+*Last updated: 2026-02-09 after roadmap creation*
