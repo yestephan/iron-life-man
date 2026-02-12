@@ -30,10 +30,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. System automatically refreshes OAuth tokens without requiring user re-authentication
   4. System stores all workout times with IANA timezone names (not just UTC offsets)
   5. System encrypts OAuth tokens using Supabase Vault with no tokens exposed to client
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- TBD during planning
+- [ ] 01-01-PLAN.md -- Database schema: Vault setup, RPC wrappers, timezone column
+- [ ] 01-02-PLAN.md -- OAuth flow: Route Handlers, token Server Actions, auto-refresh client
+- [ ] 01-03-PLAN.md -- Calendar operations: list/create/select calendars, onboarding UI
+- [ ] 01-04-PLAN.md -- Connection status: dashboard indicator, settings page, disconnect flow
 
 ### Phase 2: Calendar Write Sync
 **Goal**: Users see their training workouts automatically appear in their Google Calendar
@@ -100,11 +103,11 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. OAuth Foundation | 0/TBD | Not started | - |
+| 1. OAuth Foundation | 0/4 | Planning complete | - |
 | 2. Calendar Write Sync | 0/TBD | Not started | - |
 | 3. Conflict Detection | 0/TBD | Not started | - |
 | 4. Drag-Drop Rescheduling | 0/TBD | Not started | - |
@@ -112,4 +115,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 ---
 *Roadmap created: 2026-02-09*
-*Last updated: 2026-02-09*
+*Last updated: 2026-02-12*
