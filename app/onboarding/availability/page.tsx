@@ -43,7 +43,7 @@ export default function AvailabilityPage() {
     params.set('weekendTime', weekendTime);
     params.set('timezone', timezone);
 
-    router.push(`/onboarding/generating?${params.toString()}`);
+    router.push(`/onboarding/calendar-connect?${params.toString()}`);
   };
 
   return (
