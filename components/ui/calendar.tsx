@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { DayPicker, UI, type ClassNames } from 'react-day-picker';
+import { DayPicker, UI, DayFlag, SelectionState, type ClassNames } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
@@ -21,12 +21,14 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
         [UI.MonthCaption]: 'flex justify-center pt-1 relative items-center',
         [UI.CaptionLabel]: 'text-sm font-medium',
         [UI.Nav]: 'space-x-1 flex items-center',
-        [UI.NavButton]: cn(
+        [UI.PreviousMonthButton]: cn(
           buttonVariants({ variant: 'outline' }),
-          'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100'
+          'absolute left-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100'
         ),
-        [UI.NavButtonPrevious]: 'absolute left-1',
-        [UI.NavButtonNext]: 'absolute right-1',
+        [UI.NextMonthButton]: cn(
+          buttonVariants({ variant: 'outline' }),
+          'absolute right-1 h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100'
+        ),
         [UI.MonthGrid]: 'w-full border-collapse space-y-1',
         [UI.Weekdays]: 'flex',
         [UI.Weekday]: 'text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]',
@@ -37,15 +39,15 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
           buttonVariants({ variant: 'ghost' }),
           'h-9 w-9 p-0 font-normal aria-selected:opacity-100'
         ),
-        [UI.DayRangeEnd]: 'day-range-end',
-        [UI.DaySelected]:
+        [SelectionState.range_end]: 'day-range-end',
+        [SelectionState.selected]:
           'bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground',
-        [UI.DayToday]: 'bg-accent text-accent-foreground',
-        [UI.DayOutside]:
+        [DayFlag.today]: 'bg-accent text-accent-foreground',
+        [DayFlag.outside]:
           'day-outside text-muted-foreground opacity-50 aria-selected:bg-accent/50 aria-selected:text-muted-foreground aria-selected:opacity-30',
-        [UI.DayDisabled]: 'text-muted-foreground opacity-50',
-        [UI.DayRangeMiddle]: 'aria-selected:bg-accent aria-selected:text-accent-foreground',
-        [UI.DayHidden]: 'invisible',
+        [DayFlag.disabled]: 'text-muted-foreground opacity-50',
+        [SelectionState.range_middle]: 'aria-selected:bg-accent aria-selected:text-accent-foreground',
+        [DayFlag.hidden]: 'invisible',
         ...classNames,
       } as ClassNames}
       components={{

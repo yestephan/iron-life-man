@@ -4,13 +4,13 @@ import { getWorkout, updateWorkout } from '@/lib/supabase/queries';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await requireAuth();
     const supabase = await getSupabaseClient();
 
-    const workoutId = params.id;
+    const { id: workoutId } = await params;
     const body = await request.json();
     const { scheduled_date, scheduled_time } = body;
 

@@ -17,7 +17,8 @@ import {
 import { useDraggable } from '@dnd-kit/core';
 import { useDroppable } from '@dnd-kit/core';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Waves, Bike, Footprints, CheckCircle2, Circle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, Circle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Workout } from '@/types/database';
 import { format, addDays, startOfWeek } from 'date-fns';
@@ -47,18 +48,6 @@ const disciplineColors = {
   run: 'bg-red-500/90 border-red-600',
 };
 
-const disciplineIcons = {
-  swim: Waves,
-  bike: Bike,
-  run: Footprints,
-};
-
-const disciplineIconColors = {
-  swim: 'text-cyan-50',
-  bike: 'text-green-50',
-  run: 'text-red-50',
-};
-
 // Draggable workout event component
 function DraggableWorkoutEvent({ event }: { event: WorkoutEvent }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -74,7 +63,7 @@ function DraggableWorkoutEvent({ event }: { event: WorkoutEvent }) {
       }
     : undefined;
 
-  const Icon = disciplineIcons[event.workout.discipline];
+  const activityName = `${event.workout.discipline.charAt(0).toUpperCase() + event.workout.discipline.slice(1)} - ${event.workout.workout_type.charAt(0).toUpperCase() + event.workout.workout_type.slice(1)}`;
 
   return (
     <div
@@ -95,18 +84,18 @@ function DraggableWorkoutEvent({ event }: { event: WorkoutEvent }) {
       } ${isDragging ? 'opacity-50 scale-95 z-50' : ''}`}
     >
       <div className="flex items-start gap-1 h-full">
-        <Icon className={`w-3 h-3 mt-0.5 flex-shrink-0 ${disciplineIconColors[event.workout.discipline]}`} />
-        <div className="flex-1 min-w-0">
-          <div className="font-semibold capitalize truncate">
-            {event.workout.discipline} - {event.workout.workout_type}
-          </div>
+        <Badge
+          variant="secondary"
+          className="text-xs font-normal shrink-0 bg-white/90 text-gray-900 border-0"
+        >
+          {activityName}
+        </Badge>
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
           <div className="text-[10px] opacity-90">
             {event.workout.scheduled_time} • {event.workout.duration_minutes}min
           </div>
         </div>
-        {event.workout.status === 'completed' && (
-          <CheckCircle2 className="w-3 h-3 flex-shrink-0" />
-        )}
+        {event.workout.status === 'completed' && <CheckCircle2 className="w-3 h-3 flex-shrink-0" />}
         {event.workout.status === 'scheduled' && (
           <Circle className="w-3 h-3 flex-shrink-0 opacity-50" />
         )}
@@ -146,7 +135,11 @@ function DroppableTimeSlot({
   );
 }
 
-export default function WeeklyCalendar({ workouts, weekStart, timezone = 'UTC' }: WeeklyCalendarProps) {
+export default function WeeklyCalendar({
+  workouts,
+  weekStart,
+  timezone = 'UTC',
+}: WeeklyCalendarProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -242,7 +235,7 @@ export default function WeeklyCalendar({ workouts, weekStart, timezone = 'UTC' }
         // Calculate position - clip to visible hours if needed
         let visibleStartMinutes = Math.max(startMinutes, START_HOUR * 60);
         let visibleEndMinutes = Math.min(endMinutes, END_HOUR * 60);
-        
+
         // Only add if there's visible portion
         if (visibleStartMinutes < visibleEndMinutes) {
           const top = ((visibleStartMinutes - START_HOUR * 60) / 60) * HOUR_HEIGHT;
@@ -437,7 +430,9 @@ export default function WeeklyCalendar({ workouts, weekStart, timezone = 'UTC' }
                         isToday ? 'bg-primary/5' : ''
                       }`}
                     >
-                      <div className={`text-xs font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}>
+                      <div
+                        className={`text-xs font-medium ${isToday ? 'text-primary' : 'text-muted-foreground'}`}
+                      >
                         {dayName}
                       </div>
                       <div
@@ -530,9 +525,7 @@ export default function WeeklyCalendar({ workouts, weekStart, timezone = 'UTC' }
                 // Don't render the active dragging event (it's in the overlay)
                 if (isActive) return null;
 
-                return (
-                  <DraggableWorkoutEvent key={event.workout.id} event={event} />
-                );
+                return <DraggableWorkoutEvent key={event.workout.id} event={event} />;
               })}
             </div>
 
@@ -546,13 +539,13 @@ export default function WeeklyCalendar({ workouts, weekStart, timezone = 'UTC' }
                   style={{ width: '200px' }}
                 >
                   <div className="flex items-start gap-1">
-                    {React.createElement(disciplineIcons[activeWorkout.discipline], {
-                      className: `w-3 h-3 mt-0.5 ${disciplineIconColors[activeWorkout.discipline]}`,
-                    })}
+                    <Badge
+                      variant="secondary"
+                      className="text-xs font-normal shrink-0 bg-white/90 text-gray-900 border-0"
+                    >
+                      {`${activeWorkout.discipline.charAt(0).toUpperCase() + activeWorkout.discipline.slice(1)} - ${activeWorkout.workout_type.charAt(0).toUpperCase() + activeWorkout.workout_type.slice(1)}`}
+                    </Badge>
                     <div className="flex-1">
-                      <div className="font-semibold capitalize">
-                        {activeWorkout.discipline} - {activeWorkout.workout_type}
-                      </div>
                       <div className="text-[10px] opacity-90">
                         {activeWorkout.scheduled_time} • {activeWorkout.duration_minutes}min
                       </div>

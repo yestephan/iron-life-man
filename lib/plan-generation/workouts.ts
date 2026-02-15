@@ -52,7 +52,7 @@ export function generateWeekWorkouts(
 
   // Generate bike workouts
   WEEKLY_TEMPLATE.bike.forEach((template) => {
-    const isWeekend = template.day === 'saturday' || template.day === 'sunday';
+    const isWeekend = ['saturday', 'sunday'].includes(template.day);
     workouts.push({
       user_id: userId,
       discipline: 'bike',
@@ -69,7 +69,7 @@ export function generateWeekWorkouts(
 
   // Generate run workouts
   WEEKLY_TEMPLATE.run.forEach((template) => {
-    const isWeekend = template.day === 'saturday' || template.day === 'sunday';
+    const isWeekend = ['saturday', 'sunday'].includes(template.day);
     workouts.push({
       user_id: userId,
       discipline: 'run',

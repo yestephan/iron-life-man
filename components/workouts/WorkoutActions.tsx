@@ -76,7 +76,7 @@ export default function WorkoutActions({ workout }: WorkoutActionsProps) {
 
   if (workout.status === 'completed') {
     return (
-      <div className="flex items-center gap-2 text-sm text-green-600">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <CheckCircle2 className="w-4 h-4" />
         <span>Completed</span>
       </div>
@@ -85,7 +85,7 @@ export default function WorkoutActions({ workout }: WorkoutActionsProps) {
 
   if (workout.status === 'skipped') {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-600">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <X className="w-4 h-4" />
         <span>Skipped</span>
       </div>
@@ -95,11 +95,7 @@ export default function WorkoutActions({ workout }: WorkoutActionsProps) {
   return (
     <>
       <div className="flex items-center gap-2">
-        <Button
-          size="sm"
-          onClick={handleComplete}
-          disabled={isLoading}
-        >
+        <Button size="sm" onClick={handleComplete} disabled={isLoading}>
           <CheckCircle2 className="w-4 h-4 mr-1" />
           Complete
         </Button>
@@ -112,12 +108,7 @@ export default function WorkoutActions({ workout }: WorkoutActionsProps) {
           <Calendar className="w-4 h-4 mr-1" />
           Reschedule
         </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={handleSkip}
-          disabled={isLoading}
-        >
+        <Button size="sm" variant="ghost" onClick={handleSkip} disabled={isLoading}>
           Skip
         </Button>
       </div>

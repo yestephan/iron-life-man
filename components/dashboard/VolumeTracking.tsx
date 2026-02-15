@@ -1,91 +1,121 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Waves, Bike, Footprints } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import type { Workout, Discipline } from '@/types/database';
 
 interface VolumeTrackingProps {
   workouts: Workout[];
 }
 
-interface VolumeStats {
-  completed: number;
-  target: number;
-  percentage: number;
+function formatHoursMinutes(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = Math.round(totalMinutes % 60);
+  return `${hours}:${mins.toString().padStart(2, '0')}`;
+}
+
+function getZoneFromWorkoutType(
+  workoutType: string
+): 'zone2' | 'zone3' | 'zone4' | null {
+  switch (workoutType) {
+    case 'easy':
+    case 'long':
+      return 'zone2';
+    case 'tempo':
+      return 'zone3';
+    case 'intervals':
+      return 'zone4';
+    default:
+      return null;
+  }
 }
 
 function calculateVolumeStats(workouts: Workout[]) {
-  const stats = {
-    swim: { completed: 0, target: 0, percentage: 0 },
-    bike: { completed: 0, target: 0, percentage: 0 },
-    run: { completed: 0, target: 0, percentage: 0 },
+  const completedWorkouts = workouts.filter((w) => w.status === 'completed');
+
+  const disciplineMinutes: Record<Discipline, number> = {
+    swim: 0,
+    bike: 0,
+    run: 0,
   };
 
-  ['swim', 'bike', 'run'].forEach((discipline) => {
-    const disciplineWorkouts = workouts.filter((w) => w.discipline === discipline);
+  const zoneMinutes: Record<'zone2' | 'zone3' | 'zone4', number> = {
+    zone2: 0,
+    zone3: 0,
+    zone4: 0,
+  };
 
-    const target = disciplineWorkouts.reduce((sum, w) => sum + w.duration_minutes, 0) / 60;
-
-    const completed =
-      disciplineWorkouts
-        .filter((w) => w.status === 'completed')
-        .reduce((sum, w) => sum + w.duration_minutes, 0) / 60;
-
-    stats[discipline as Discipline] = {
-      completed: Math.round(completed * 10) / 10,
-      target: Math.round(target * 10) / 10,
-      percentage: target > 0 ? Math.round((completed / target) * 100) : 0,
-    };
+  completedWorkouts.forEach((w) => {
+    disciplineMinutes[w.discipline] += w.duration_minutes;
+    const zone = getZoneFromWorkoutType(w.workout_type);
+    if (zone) {
+      zoneMinutes[zone] += w.duration_minutes;
+    }
   });
 
-  return stats;
+  const totalMinutes = completedWorkouts.reduce((sum, w) => sum + w.duration_minutes, 0);
+
+  return {
+    totalMinutes,
+    disciplineMinutes,
+    zoneMinutes,
+  };
+}
+
+interface SummaryCardProps {
+  totalLabel: string;
+  totalValue: string;
+  categories: { value: string; label: string }[];
+}
+
+function SummaryCard({ totalLabel, totalValue, categories }: SummaryCardProps) {
+  return (
+    <Card className="rounded-lg border bg-card shadow-sm">
+      <CardContent className="p-6">
+        <div className="text-3xl font-bold">{totalValue}</div>
+        <div className="text-sm text-muted-foreground mb-6">{totalLabel}</div>
+        <div className="flex justify-between gap-4">
+          {categories.map(({ value, label }) => (
+            <div key={label} className="flex flex-col items-center flex-1">
+              <div className="text-xl font-bold">{value}</div>
+              <div className="text-sm text-muted-foreground">{label}</div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function VolumeTracking({ workouts }: VolumeTrackingProps) {
-  const stats = calculateVolumeStats(workouts);
+  const { totalMinutes, disciplineMinutes, zoneMinutes } = calculateVolumeStats(workouts);
+  const totalFormatted = formatHoursMinutes(totalMinutes);
 
-  const disciplines = [
-    {
-      key: 'swim' as const,
-      label: 'Swim',
-      icon: <Waves className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />,
-      color: 'text-cyan-600',
-    },
-    {
-      key: 'bike' as const,
-      label: 'Bike',
-      icon: <Bike className="w-5 h-5 text-green-600 dark:text-green-400" />,
-      color: 'text-green-600',
-    },
-    {
-      key: 'run' as const,
-      label: 'Run',
-      icon: <Footprints className="w-5 h-5 text-red-600 dark:text-red-400" />,
-      color: 'text-red-600',
-    },
-  ];
+  const disciplineCard = (
+    <SummaryCard
+      totalLabel="Total hr"
+      totalValue={totalFormatted}
+      categories={[
+        { value: formatHoursMinutes(disciplineMinutes.swim), label: 'Swim' },
+        { value: formatHoursMinutes(disciplineMinutes.bike), label: 'Bike' },
+        { value: formatHoursMinutes(disciplineMinutes.run), label: 'Run' },
+      ]}
+    />
+  );
+
+  const zoneCard = (
+    <SummaryCard
+      totalLabel="Total hr"
+      totalValue={totalFormatted}
+      categories={[
+        { value: formatHoursMinutes(zoneMinutes.zone2), label: 'Zone 2' },
+        { value: formatHoursMinutes(zoneMinutes.zone3), label: 'Zone 3' },
+        { value: formatHoursMinutes(zoneMinutes.zone4), label: 'Zone 4' },
+      ]}
+    />
+  );
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      {disciplines.map(({ key, label, icon, color }) => (
-        <Card key={key}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              {icon}
-              {label}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex items-baseline gap-2">
-                <div className={`text-2xl font-bold ${color}`}>{stats[key].completed}h</div>
-                <div className="text-sm text-muted-foreground">/ {stats[key].target}h</div>
-              </div>
-              <Progress value={stats[key].percentage} className="h-2" />
-              <div className="text-xs text-muted-foreground">{stats[key].percentage}% complete</div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="grid gap-4 md:grid-cols-2">
+      {disciplineCard}
+      {zoneCard}
     </div>
   );
 }

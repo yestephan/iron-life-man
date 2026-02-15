@@ -1,0 +1,14 @@
+---
+description: Always verify build succeeds after completing work
+alwaysApply: true
+---
+
+# Build Verification
+
+After completing any coding task, **always run a build check** before finishing:
+
+1. Run `pnpm build` (or `npm run build`) to ensure the Next.js app compiles without errors
+2. If build fails, fix the errors before considering the work complete
+3. Optionally run `pnpm type-check` for faster TypeScript validation during iteration
+
+Do not mark work as complete until the build passes.
