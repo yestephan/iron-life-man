@@ -45,6 +45,7 @@ function workoutRowToWorkout(row: WorkoutRow): Workout {
     ...row,
     scheduled_date: new Date(row.scheduled_date),
     completed_at: row.completed_at ? new Date(row.completed_at) : undefined,
+    timezone: row.timezone ?? undefined,
     created_at: new Date(row.created_at),
     updated_at: new Date(row.updated_at),
   };
@@ -377,6 +378,7 @@ export async function createWorkouts(
     completed_at: workout.completed_at?.toISOString(),
     week_number: workout.week_number,
     phase: workout.phase,
+    timezone: workout.timezone,
   }));
 
   // If batch is small enough, insert in one go (most efficient)

@@ -22,6 +22,7 @@ export type TemperatureUnit = 'celsius' | 'fahrenheit';
 export type Theme = 'light' | 'dark' | 'system';
 export type ZoneType = 'heart_rate' | 'power' | 'pace';
 export type IntegrationProvider = 'google_calendar' | 'strava' | 'garmin' | 'trainingpeaks' | 'whoop' | 'other';
+export type SyncStatus = 'connected' | 'disconnected' | 'error' | 'needs_reconnection';
 
 // ============================================================================
 // USER PROFILES
@@ -233,6 +234,7 @@ export interface Workout {
   completed_at?: Date;
   week_number: number;
   phase: Phase;
+  timezone?: string; // IANA timezone name (e.g., 'America/New_York')
   created_at: Date;
   updated_at: Date;
 }
@@ -250,6 +252,7 @@ export interface WorkoutRow {
   completed_at: string | null;
   week_number: number;
   phase: Phase;
+  timezone: string | null; // IANA timezone name (e.g., 'America/New_York')
   created_at: string;
   updated_at: string;
 }
@@ -491,7 +494,9 @@ export interface Integration {
   user_id: string;
   provider: IntegrationProvider;
   provider_user_id?: string;
+  /** Vault secret UUID (not the actual token) for encrypted OAuth access token */
   access_token?: string;
+  /** Vault secret UUID (not the actual token) for encrypted OAuth refresh token */
   refresh_token?: string;
   token_expires_at?: Date;
   calendar_id?: string;
@@ -509,7 +514,9 @@ export interface IntegrationRow {
   user_id: string;
   provider: IntegrationProvider;
   provider_user_id: string | null;
+  /** Vault secret UUID (not the actual token) for encrypted OAuth access token */
   access_token: string | null;
+  /** Vault secret UUID (not the actual token) for encrypted OAuth refresh token */
   refresh_token: string | null;
   token_expires_at: string | null;
   calendar_id: string | null;
@@ -520,4 +527,20 @@ export interface IntegrationRow {
   last_sync_error: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// ============================================================================
+// GOOGLE CALENDAR INTEGRATION
+// ============================================================================
+
+/**
+ * Type-safe interface for Google Calendar integrations with Vault-based token storage.
+ * Extends the base Integration interface with Google Calendar-specific semantics.
+ */
+export interface GoogleCalendarIntegration extends Omit<Integration, 'provider'> {
+  provider: 'google_calendar';
+  /** Vault UUID for encrypted access token - use vault_read_secret() to retrieve */
+  access_token_vault_id?: string;
+  /** Vault UUID for encrypted refresh token - use vault_read_secret() to retrieve */
+  refresh_token_vault_id?: string;
 }
