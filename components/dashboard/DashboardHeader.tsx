@@ -1,14 +1,19 @@
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
-import { Settings, Calendar } from 'lucide-react';
 import type { Phase } from '@/types/database';
+import ConnectionStatus from '@/components/calendar/ConnectionStatus';
 
 interface DashboardHeaderProps {
   currentWeek: number;
   totalWeeks: number;
   phase: Phase;
   raceDate: Date;
+  calendarStatus?: {
+    is_active: boolean;
+    last_sync_status: string | null;
+    last_sync_error: string | null;
+    calendar_id: string | null;
+    last_sync_at: string | null;
+  } | null;
 }
 
 export default function DashboardHeader({
@@ -16,6 +21,7 @@ export default function DashboardHeader({
   totalWeeks,
   phase,
   raceDate,
+  calendarStatus,
 }: DashboardHeaderProps) {
   const phaseLabels = {
     base: 'Base Phase',
@@ -51,14 +57,15 @@ export default function DashboardHeader({
           </p>
         </div>
       </div>
-      <div className="flex gap-2">
-        <Link href="/settings">
-          <Button variant="outline" size="sm">
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
-          </Button>
-        </Link>
-      </div>
+      {calendarStatus && (
+        <div className="mt-2 md:mt-0">
+          <ConnectionStatus
+            integration={calendarStatus}
+            variant="compact"
+            showLink={true}
+          />
+        </div>
+      )}
     </div>
   );
 }
