@@ -10,29 +10,29 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 ## Current Position
 
 Phase: 1 of 5 (OAuth Foundation)
-Plan: 1 of 4 in current phase
+Plan: 2 of 4 in current phase
 Status: In progress
-Last activity: 2026-02-15 — Completed plan 01-01 (Vault setup & data model updates)
+Last activity: 2026-02-15 — Completed plan 01-02 (Google OAuth flow with Vault storage)
 
-Progress: [██░░░░░░░░] 25%
+Progress: [████░░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
+- Total plans completed: 2
 - Average duration: 3 minutes
-- Total execution time: 0.05 hours
+- Total execution time: 0.1 hours
 
 **By Phase:**
 
 | Phase                 | Plans | Total  | Avg/Plan |
 |-----------------------|-------|--------|----------|
-| 1 (OAuth Foundation)  | 1     | 3 min  | 3 min    |
+| 1 (OAuth Foundation)  | 2     | 6 min  | 3 min    |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01 (3 min)
-- Trend: Just starting
+- Last 5 plans: 01-01 (3 min), 01-02 (3 min)
+- Trend: Consistent velocity
 
 *Updated after each plan completion*
 
@@ -50,6 +50,9 @@ Recent decisions affecting current work:
 - Phase 1 (01-01): Use Vault RPC wrapper functions with auth.uid() checks for security layer
 - Phase 1 (01-01): Store Vault UUIDs in existing TEXT columns for non-destructive migration
 - Phase 1 (01-01): Default workouts.timezone to 'UTC' for safe backward compatibility
+- Phase 1 (01-02): Treat OAuth denial/cancel same as skip for graceful UX
+- Phase 1 (01-02): Force prompt='consent' to ensure refresh_token is always issued
+- Phase 1 (01-02): Use 'tokens' event listener for automatic token refresh persistence
 
 ### Pending Todos
 
@@ -62,7 +65,7 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 01-01-PLAN.md (Vault setup & data model updates)
+Stopped at: Completed 01-02-PLAN.md (Google OAuth flow with Vault storage)
 Resume file: None
 
 ---
