@@ -51,6 +51,21 @@ function workoutRowToWorkout(row: WorkoutRow): Workout {
   };
 }
 
+// User profile display info (avatar, name) for header
+export async function getProfileDisplay(
+  userId: string,
+  supabaseClient?: SupabaseClient
+): Promise<{ avatar_url: string | null; display_name: string | null; full_name: string | null } | null> {
+  const client = supabaseClient || (await createClient());
+  const { data, error } = await client
+    .from('user_profiles')
+    .select('avatar_url, display_name, full_name')
+    .eq('id', userId)
+    .single();
+  if (error || !data) return null;
+  return data;
+}
+
 // Profile queries
 export async function getProfile(
   userId: string,
@@ -433,4 +448,37 @@ export async function updateWorkout(
 
   if (error) throw error;
   return workoutRowToWorkout(data as WorkoutRow);
+}
+
+// Google Calendar integration queries
+export async function getGoogleCalendarIntegration(
+  userId: string,
+  supabaseClient?: SupabaseClient
+): Promise<{
+  id: string;
+  is_active: boolean;
+  last_sync_status: string | null;
+  last_sync_error: string | null;
+  calendar_id: string | null;
+  last_sync_at: string | null;
+  token_expires_at: string | null;
+} | null> {
+  const client = supabaseClient || (await createClient());
+  const { data, error } = await client
+    .from('integrations')
+    .select('id, is_active, last_sync_status, last_sync_error, calendar_id, last_sync_at, token_expires_at')
+    .eq('user_id', userId)
+    .eq('provider', 'google_calendar')
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data;
+}
+
+export async function getCalendarDisplayName(
+  userId: string,
+  supabaseClient?: SupabaseClient
+): Promise<string | null> {
+  const integration = await getGoogleCalendarIntegration(userId, supabaseClient);
+  return integration?.calendar_id || null;
 }
