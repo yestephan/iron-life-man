@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 ## Current Position
 
 Phase: 1 of 5 (OAuth Foundation)
-Plan: 2 of 4 in current phase
-Status: In progress
-Last activity: 2026-02-15 — Completed plan 01-02 (Google OAuth flow with Vault storage)
+Plan: 4 of 4 in current phase
+Status: Completed
+Last activity: 2026-02-15 — Completed plan 01-04 (Calendar Connection Status UI)
 
-Progress: [████░░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 3 minutes
-- Total execution time: 0.1 hours
+- Total plans completed: 4
+- Average duration: 3.5 minutes
+- Total execution time: 0.23 hours
 
 **By Phase:**
 
 | Phase                 | Plans | Total  | Avg/Plan |
 |-----------------------|-------|--------|----------|
-| 1 (OAuth Foundation)  | 2     | 6 min  | 3 min    |
+| 1 (OAuth Foundation)  | 4     | 14 min | 3.5 min  |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01 (3 min), 01-02 (3 min)
+- Last 5 plans: 01-01 (3 min), 01-02 (3 min), 01-03 (3 min), 01-04 (4 min)
 - Trend: Consistent velocity
 
 *Updated after each plan completion*
@@ -53,6 +53,10 @@ Recent decisions affecting current work:
 - Phase 1 (01-02): Treat OAuth denial/cancel same as skip for graceful UX
 - Phase 1 (01-02): Force prompt='consent' to ensure refresh_token is always issued
 - Phase 1 (01-02): Use 'tokens' event listener for automatic token refresh persistence
+- [Phase 01-03]: Create dedicated 'Iron Life Man' calendar with user's timezone (follows research pitfall #6)
+- [Phase 01-03]: Two-step calendar-connect flow (permissions -> selection) for transparency
+- [Phase 01-04]: ConnectionStatus receives integration data as props (not token UUIDs) for security
+- [Phase 01-04]: Dashboard status indicator is clickable link to calendar settings for UX
 
 ### Pending Todos
 
@@ -65,7 +69,7 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-15
-Stopped at: Completed 01-02-PLAN.md (Google OAuth flow with Vault storage)
+Stopped at: Completed 01-04-PLAN.md (Calendar Connection Status UI)
 Resume file: None
 
 ---
